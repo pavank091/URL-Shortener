@@ -4,6 +4,7 @@ const URL = require("../models/url");
 async function handleGenerateNewShortUrl(req, res) {
     // client send original url(body.url)
     const body = req.body;
+    console.log(req.user);
     // 400(bad request) - url is not existed
     // if url is existed but not found then 404
     if(!body.url) return res.status(400).json({ error: 'url is required'})

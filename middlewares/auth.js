@@ -1,38 +1,35 @@
 const { getUser } = require("../service/auth");
 
 
-async function restrictToLoggedinUserOnly(req, res, next) {
-    const userUid = req.headers["authorization"];
-    // userUid = [Bearer 23ul1232ukhdigjdh]
+function checkForAuthentication(req, res, next) {
+    const tokenCookie = req.cookies?.token;
+    
+    req.user = null;
+    if (!tokenCookie) return next();
 
-    if (!userUid) return res.redirect("/login");
-    const token = userUid.split(" ")[1]; // [23ul1232ukhdigjdh]
-
+    const token = tokenCookie;
+    // validate
     const user = getUser(token);
 
-    console.log("DECODED USER:", user);
-
-    if (!user) return res.redirect("/login");
-
     req.user = user;
-    next();
+    return next();
+
 }
 
-async function checkAuth(req, res, next) {
-    console.log(req.headers);
-    const userUid = req.headers["authorization"];
-    
-    // userUid = [Bearer 23ul1232ukhdigjdh]
-    if(!userUid) return res.json({ "error": "Credentials are invalid"});
-    const token = userUid.split(" ")[1]; // [23ul1232ukhdigjdh]
+// a user - which can access 
+function restrictTo(roles = []){
+      return function (req, res, next) {
+        if(!req.user) return res.redirect("/login");
 
-    const user = getUser(token);
+        if(!roles.includes(req.user.role))
+            return res.end("UnAuthorized");
 
-    req.user = user;
-    next();
+        next();
+      };
 }
 
 module.exports = {
-    restrictToLoggedinUserOnly,
-    checkAuth,
+    checkForAuthentication,
+    restrictTo,
+    
 }; 
